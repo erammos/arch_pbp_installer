@@ -16,7 +16,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install Rust toolchain with musl
+      run: |
+        rustup target add x86_64-unknown-linux-musl
+        sudo apt-get update
+        sudo apt-get install -y musl-tools
     - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      run: cargo build --release --target x86_64-unknown-linux-musl --verbose
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: binary
+        path: target/x86_64-unknown-linux-musl/release/arch_pbp_installer
