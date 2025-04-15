@@ -170,10 +170,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let device = args[1].as_str();
-    let (root_dir, _boot_dir, _root_part, _boot_part) = create_partitions(device).await;
+    let (root_dir, _boot_dir, root_part,boot_part) = create_partitions(device).await;
     download_linux().await?;
     extracting_tar(root_dir).await?;
-    let root_uuid = modify_fstab("/dev/sdc3".to_string(), "/dev/sdc2".to_string()).await?;
+    let root_uuid = modify_fstab(root_part, boot_part).await?;
     create_extlinux(&root_uuid).await?;
 
     Ok(())
