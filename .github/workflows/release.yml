@@ -23,10 +23,7 @@ jobs:
 
       - name: Build release for ${{ matrix.target }}
         run: cross build --release --target ${{ matrix.target }}
-
-      - name: Strip binary
-        run: strip target/${{ matrix.target }}/release/arch_pbp_installer
-
+        
       - name: Package binary
         run: |
           BIN_NAME=arch_pbp_installer
