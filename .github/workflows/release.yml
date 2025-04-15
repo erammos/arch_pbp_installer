@@ -3,28 +3,43 @@ name: Release
 on:
   push:
     tags:
-      - 'v*' 
+      - "v*"
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-musl, aarch64-unknown-linux-musl]
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Install Rust toolchain with musl
-      run: |
-        rustup target add x86_64-unknown-linux-musl
-        sudo apt-get update
-        sudo apt-get install -y musl-tools
-    - name: Build
-      run: cargo build --release --target x86_64-unknown-linux-musl --verbose
-    - name: Upload Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: target/x86_64-unknown-linux-musl/release/arch_pbp_installer
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+
+      - name: Install cross
+        uses: taiki-e/install-action@cross
+
+      - name: Build release for ${{ matrix.target }}
+        run: cross build --release --target ${{ matrix.target }}
+
+      - name: Strip binary
+        run: strip target/${{ matrix.target }}/release/arch_pbp_installer
+
+      - name: Package binary
+        run: |
+          BIN_NAME=arch_pbp_installer
+          TARGET=${{ matrix.target }}
+          mkdir -p dist
+          cp target/$TARGET/release/$BIN_NAME dist/${BIN_NAME}-${TARGET}
+          cd dist
+          tar -czvf ${BIN_NAME}-${TARGET}.tar.gz ${BIN_NAME}-${TARGET}
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
